@@ -1,7 +1,7 @@
 import math
 
 class ADSR:
-    def __init__(self, a=1, d=0, s=1, r=1, rtime=0):
+    def __init__(self, a=0, d=0.1, s=0.7, r=0.1, rtime=0):
         self.a = a
         self.d = d
         self.s = s
@@ -37,15 +37,19 @@ class Synth:
         self.clock = 0.0
         self.samplerate = 48000
         self.frequency = 220
+        self.vol = 0
 
     def set_freq(self, val):
         self.frequency = val
         for i in self.ops:
             i.frequency = val
 
+    def set_vol(self, val):
+        self.vol = val
+
     def get_sample(self):
         func = alg.get(self.algorithm)
-        return func(self.ops, self.clock)
+        return (self.vol / 127) * func(self.ops, self.clock)
 
     def step(self):
         self.clock += 1/self.samplerate
@@ -60,6 +64,11 @@ class Synth:
     def release(self):
         for op in self.ops:
             op.envelope.rtime = self.clock
+
+    def press(self):
+        self.clock = 0
+        for op in self.ops:
+            op.envelope.rtime = 0
 
 
 def algtest(ops, clock):
