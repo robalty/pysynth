@@ -21,13 +21,15 @@ stream = p.open(format=pyaudio.paFloat32,
 stream.start_stream()
 
 inport = mido.open_input(mido.get_input_names()[0])
+playing = 0
 for msg in inport:
     if msg.type == 'note_on':
-        temp = (2 ** ((msg.note - 69) / 12)) * 440
+        playing = msg.note
+        temp = (2 ** ((playing - 69) / 12)) * 440
         instrument.set_freq(temp)
         instrument.set_vol(msg.velocity)
         instrument.press()
-    else:
+    elif (msg.type == 'note_off') & (msg.note == playing):
         instrument.release()
 stream.stop_stream()
 stream.close()
