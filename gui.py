@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QGridLayout
 from PyQt5.QtGui import QIcon, QPixmap
 
 class App(QWidget):
@@ -17,11 +17,18 @@ class App(QWidget):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
     
-        # Create widget
+        layout = QGridLayout()
+
+        # Create the splash image widget
         label = QLabel(self)
         pixmap = QPixmap('synthwave.jpg')
         label.setPixmap(pixmap)
         self.resize(pixmap.width(), pixmap.height())
+
+
+        # Set up the widget grid layout
+        layout.addWidget(label, 0, 0)
+        self.setLayout(layout)
         
         self.show()
 
