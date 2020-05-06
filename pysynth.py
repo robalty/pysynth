@@ -22,15 +22,23 @@ stream.start_stream()
 
 inport = mido.open_input(mido.get_input_names()[0])
 playing = 0
+pfreq = 0
 for msg in inport:
     if msg.type == 'note_on':
         playing = msg.note
-        temp = (2 ** ((playing - 69) / 12)) * 440
-        instrument.set_freq(temp)
-        instrument.set_vol(msg.velocity)
         instrument.press()
-    elif (msg.type == 'note_off') & (msg.note == playing):
-        instrument.release()
+        pfreq = (2 ** ((playing - 69) / 12)) * 440
+        instrument.set_freq(pfreq)
+        instrument.set_vol(msg.velocity)
+    elif msg.type == 'note_off':
+        if msg.note == playing:
+            instrument.release()
+    elif msg.type == 'pitchwheel':
+        mod = (msg.pitch  + 32768) / 32768
+        x = pfreq * mod
+        instrument.set_freq(x)
+    else:
+        print(msg)
 stream.stop_stream()
 stream.close()
 

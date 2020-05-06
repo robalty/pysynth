@@ -1,7 +1,7 @@
 import math
 
 class ADSR:
-    def __init__(self, a=0, d=0.1, s=0.7, r=0.1, rtime=0):
+    def __init__(self, a=0.1, d=0.2, s=0.6, r=0.1, rtime=0):
         self.a = a
         self.d = d
         self.s = s
