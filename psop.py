@@ -1,84 +1,107 @@
 import math
 import numpy as np
 
-class ADSR:
-    def __init__(self, a=0.1, d=0.2, s=0.6, r=0.1, rtime=0):
-        self.a = a
-        self.d = d
-        self.s = s
-        self.r = r
-        self.rtime = rtime
+SAMPLERATE = 48000
 
-    def get_vol(self, clock):
-        if self.rtime != 0:
-            return lerp(self.s, 0, clock - self.rtime, self.r)
-        elif clock < self.a:
-            return lerp(0, 1, clock, self.a)
-        elif clock < (self.a + self.d):
-            return lerp(1, self.s, (clock - self.a), self.d)
-        else:
-            return self.s
+SINETABLE = np.sin(2 * np.pi * np.arange(0, 1, 1/48000))
+
+
+class ADSR:
+    def __init__(self, a=0.1, d1=0.3, d2=1, s=0.6, r=0.1, rtime=0):
+        self.timings = {
+                0 : 0,
+                1 : 1 / (4 * a * SAMPLERATE),
+                2 : -1 / (4 * d1 * SAMPLERATE),
+                3 : -1 / (4 * d2 * SAMPLERATE),
+                4 : -1 / (4 * r * SAMPLERATE)
+        }
+        self.s = s
+        self.stage = 0
+        self.cur = 0
+
+    def get_vol(self):
+        if self.stage == 0:
+            return 0
+        temp = self.cur
+        self.cur += self.timings.get(self.stage)
+        if self.cur > 1:
+            self.cur = 1
+            self.stage = 2
+        elif (self.stage == 2) & (self.cur < self.s):
+            self.stage = 3
+        elif (self.cur < 0):
+            self.cur = 0
+            self.stage = 0
+        return temp
 
 class Operator:
-    def __init__(self, i=1, f=220, m=1, env=ADSR()):
-        self.modulation = i
+    def __init__(self, i=SAMPLERATE, f=220, m=1):
+        self.modulation = i / (2 * math.pi)
         self.frequency = f
         self.freq_mult = m
-        self.envelope = env
+        self.envelope = ADSR()
         self.feedback = 0
+        self.acc_phase = 0
 
     def sample(self, clock):
-        vol = self.envelope.get_vol(clock)
-        curval = 2 * math.pi * self.frequency * self.freq_mult * clock
-        return vol * math.sin(curval)
+        vol = self.envelope.get_vol()
+        cur = int((self.frequency * clock) + self.acc_phase) % SAMPLERATE
+        return vol * SINETABLE[cur]
 
     def sample_with(self, in_op, clock):
-        vol = self.envelope.get_vol(clock)
-        curval = 2 * math.pi * self.frequency * self.freq_mult * clock
-        return vol * math.sin(curval + (self.modulation * in_op))
+        vol = self.envelope.get_vol()
+        cur = int((self.frequency * clock) + (in_op * self.modulation) + self.acc_phase) % SAMPLERATE
+        return vol * SINETABLE[cur]
     
     def sample_fb(self, clock):
-        temp = self.sample_with(self.feedback, clock)
-        self.feedback = temp
-        return temp
+        vol = self.envelope.get_vol()
+        cur = int((self.frequency * clock) + (self.feedback * self.modulation) + self.acc_phase) % SAMPLERATE
+        ret = vol * SINETABLE[cur]
+        self.feedback = ret
+        return ret
 
 class Synth:
     def __init__(self):
         self.ops = [Operator(), Operator(), Operator(), Operator()]
         self.algorithm = 1
-        self.clock = 0.0
-        self.samplerate = 48000
+        self.clock = 0
+        self.samplerate = SAMPLERATE
         self.frequency = 220
         self.vol = 0
 
     def set_freq(self, val):
         self.frequency = val
         for i in self.ops:
-            i.frequency = val
+            t = val * i.freq_mult
+            i.acc_phase += ((i.frequency - t) * (self.clock)) % SAMPLERATE
+            i.frequency = t
+
 
     def get_sample(self):
         func = alg.get(self.algorithm)
         return self.vol * func(self.ops, self.clock)
 
     def step(self):
-        self.clock += 1/self.samplerate
+        self.clock += 1
 
     def get_samples(self, num_samples):
-        temp = np.empty(num_samples, dtype=np.int16)
         func = alg.get(self.algorithm)
-        for i in range(0, num_samples):
-            np.put(temp, i, self.vol * func(self.ops, self.clock))
-            self.clock += 1/self.samplerate
+        iterable = (self.vol * func(self.ops, x) for x in range(self.clock, self.clock+num_samples))
+        temp = np.fromiter(iterable, np.float32, num_samples)
+        self.clock += num_samples
+        self.clock = self.clock % SAMPLERATE
         return temp
 
     def release(self):
         for op in self.ops:
-            op.envelope.rtime = self.clock
+            op.envelope.stage = 4
 
     def press(self):
         self.clock = 0
         for op in self.ops:
-            op.envelope.rtime = 0
+            op.envelope.stage = 1
+            op.envelope.cur = 0
+            op.acc_phase = 0
 
 
 def algtest(ops, clock):

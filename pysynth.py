@@ -1,11 +1,9 @@
 from psop import *
 import pyaudio
 import numpy as np
-from PyQt5.QtWidgets import QApplication, QWidget
 import mido
 
 instrument = Synth()
-instrument2 = Synth()
 p = pyaudio.PyAudio()
 mido.set_backend('mido.backends.rtmidi/LINUX_ALSA')
 
@@ -22,39 +20,48 @@ stream = p.open(format=pyaudio.paInt16,
 stream.start_stream()
 
 inport = mido.open_input(mido.get_input_names()[0])
-playing = 0
-pfreq = 0
-nvol = 0
-gvol = 128
+
+#VARIABLES:
+cur_note = 0
+cur_freq = 0
+cur_vol = 0
+cur_pitch = 1
+global_vol = 128
 for msg in inport:
     if msg.type == 'note_on':
-        playing = msg.note
+        cur_note = msg.note
         instrument.press()
-        pfreq = (2 ** ((playing - 69) / 12)) * 440
-        instrument.set_freq(pfreq)
-        nvol = msg.velocity
-        instrument.vol = nvol * gvol
+        cur_freq = (2 ** ((cur_note - 69) / 12)) * 440
+        instrument.set_freq(cur_freq * cur_pitch)
+        cur_vol = msg.velocity
+        instrument.vol = cur_vol * global_vol
     elif msg.type == 'note_off':
-        if msg.note == playing:
+        if msg.note == cur_note:
             instrument.release()
     elif msg.type == 'pitchwheel':
-        mod = 1 + (msg.pitch / 32768)
-        x = pfreq * mod
+        #pitch bend - 1 octave range
+        cur_pitch = 2 ** (msg.pitch / 8192)
+        x = cur_freq * cur_pitch
         instrument.set_freq(x)
     elif msg.type == 'control_change':
         if msg.control == 7:
-            gvol = msg.value
-            instrument.vol = gvol * nvol
+            #volume knob
+            global_vol = msg.value
+            instrument.vol = global_vol * cur_vol
         elif msg.control == 3:
+            #next algorithm (ff on my keyboard)
             if msg.value != 0:
                 instrument.algorithm = (instrument.algorithm + 1) % 9
                 print(instrument.algorithm)
         elif msg.control == 2:
+            #prev algorithm (rw on my keyboard)
             if msg.value != 0:
                 instrument.algorithm = (instrument.algorithm - 1) % 9
                 print(instrument.algorithm)
         elif msg.control == 1:
-            instrument.ops[0].modulation = (msg.value - 64) / 32
+            #feedback amount on op[0] - mod wheel
+            t = (msg.value - 64) * (512 / np.pi)
+            instrument.ops[0].modulation = (msg.value - 64) * (8192 / np.pi)
         else:
             print(msg)
     else:
