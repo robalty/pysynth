@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 class ADSR:
     def __init__(self, a=0.1, d=0.2, s=0.6, r=0.1, rtime=0):
@@ -24,11 +25,22 @@ class Operator:
         self.frequency = f
         self.freq_mult = m
         self.envelope = env
+        self.feedback = 0
 
-    def get_sample(self, in_op, clock):
+    def sample(self, clock):
+        vol = self.envelope.get_vol(clock)
+        curval = 2 * math.pi * self.frequency * self.freq_mult * clock
+        return vol * math.sin(curval)
+
+    def sample_with(self, in_op, clock):
         vol = self.envelope.get_vol(clock)
         curval = 2 * math.pi * self.frequency * self.freq_mult * clock
         return vol * math.sin(curval + (self.modulation * in_op))
+    
+    def sample_fb(self, clock):
+        temp = self.sample_with(self.feedback, clock)
+        self.feedback = temp
+        return temp
 
 class Synth:
     def __init__(self):
@@ -44,21 +56,19 @@ class Synth:
         for i in self.ops:
             i.frequency = val
 
-    def set_vol(self, val):
-        self.vol = val
-
     def get_sample(self):
         func = alg.get(self.algorithm)
-        return (self.vol / 127) * func(self.ops, self.clock)
+        return self.vol * func(self.ops, self.clock)
 
     def step(self):
         self.clock += 1/self.samplerate
 
     def get_samples(self, num_samples):
-        temp = []
+        temp = np.empty(num_samples, dtype=np.int16)
+        func = alg.get(self.algorithm)
         for i in range(0, num_samples):
-            temp.append(self.get_sample())
-            self.step()
+            np.put(temp, i, self.vol * func(self.ops, self.clock))
+            self.clock += 1/self.samplerate
         return temp
 
     def release(self):
@@ -72,22 +82,53 @@ class Synth:
 
 
 def algtest(ops, clock):
-    return ops[0].get_sample(0, clock)
+    return ops[0].sample_fb(clock)
 def alg1(ops, clock):
-    first = ops[0].get_sample(0, clock)
-    second = ops[1].get_sample(first, clock)
-    third = ops[2].get_sample(second, clock)
-    return ops[2].get_sample(third, clock)
+    first = ops[0].sample_fb(clock)
+    second = ops[1].sample_with(first, clock)
+    third = ops[2].sample_with(second, clock)
+    return ops[2].sample_with(third, clock)
 def alg2(ops, clock):
-    return ops[0].get_sample(0, clock)
+    first = ops[0].sample_fb(clock) + ops[1].sample(clock)
+    second = ops[2].sample_with(first, clock)
+    return ops[3].sample_with(second, clock)
 def alg3(ops, clock):
-    return ops[0].get_sample(0, clock)
+    first = ops[0].sample_fb(clock)
+    second = ops[1].sample(clock)
+    third = ops[2].sample_with(second, clock)
+    return ops[3].sample_with((first + third) / 2, clock)
+#alg4 is the same as alg3 except with (0 + 1) + 2 instead of 0 + (1 + 2)
+#this makes a difference because operator 0 can have feedback
+def alg4(ops, clock):
+    first = ops[0].sample_fb(clock)
+    second = ops[1].sample_with(first, clock)
+    third = ops[2].sample(clock)
+    return ops[3].sample_with((second + third) / 2, clock)
+def alg5(ops, clock):
+    first = ops[0].sample_fb(clock)
+    second = ops[1].sample_with(first, clock)
+    third = ops[2].sample(clock)
+    return (ops[3].sample_with(third, clock) + second) / 2
+def alg6(ops, clock):
+    first = ops[0].sample_fb(clock)
+    return (ops[1].sample_with(first, clock) + ops[2].sample_with(first, clock) + ops[3].sample_with(first, clock)) / 3
+def alg7(ops, clock):
+    first = ops[0].sample_fb(clock)
+    return (ops[1].sample_with(first, clock) + ops[2].sample(clock) + ops[3].sample(clock)) / 3
+def alg8(ops, clock):
+    return (ops[0].sample_fb(clock) + ops[1].sample(clock) + ops[2].sample(clock) + ops[3].sample(clock)) / 4
+
 
 alg = {
         0 : algtest,
         1 : alg1,
         2 : alg2,
-        3 : alg3
+        3 : alg3,
+        4 : alg4,
+        5 : alg5,
+        6 : alg6,
+        7 : alg7,
+        8 : alg8
 }
 
 def lerp(startval, endval, time, endtime):
