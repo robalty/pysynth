@@ -1,7 +1,8 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QGridLayout
-from PyQt5.QtWidgets import QComboBox
+from PyQt5.QtWidgets import QComboBox, QSlider
 from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import *
 
 class App(QWidget):
 
@@ -26,14 +27,18 @@ class App(QWidget):
         label.setPixmap(pixmap)
         self.resize(pixmap.width(), pixmap.height())
 
-        # Create instrument selector
+        # Instrument selector
         inst_select = QComboBox()
         inst_select.addItem('Synth 1')
-        inst_select.addItem('Senth 2')
+        inst_select.addItem('Synth 2')
+
+        # Volume control slider
+        vol_slider = QSlider(Qt.Vertical)
 
         # Set up the widget grid layout
         layout.addWidget(label, 0, 0)
         layout.addWidget(inst_select, 1, 0)
+        layout.addWidget(vol_slider, 2, 0)
         self.setLayout(layout)
         
         self.show()
