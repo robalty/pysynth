@@ -8,16 +8,12 @@ class GUI(QWidget):
 
     def __init__(self):
         super(GUI, self).__init__()
-        self.threadpool = QThreadPool()
         self.title = 'PySynth - Feel the wave'
         self.left = 10
         self.top = 10
         self.width = 640
         self.height = 480
         self.initGUI()
-
-        synth = PySynth()
-        self.threadpool.start(synth)
     
     def initGUI(self):
         self.setWindowTitle(self.title)

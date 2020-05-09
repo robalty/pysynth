@@ -83,6 +83,11 @@ class PySynth(QRunnable):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = GUI()
-    sys.exit(app.exec_())
 
+    threadpool = QThreadPool()
+    window = GUI()
+    synth = PySynth()
+    threadpool.start(synth)
+
+    sys.exit(app.exec_())
+    
