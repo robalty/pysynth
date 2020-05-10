@@ -4,6 +4,10 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import *
 
+
+class Synth_signal(QObject):
+    safe_exit = pyqtSignal()
+
 class GUI(QWidget):
 
     def __init__(self):
@@ -13,6 +17,10 @@ class GUI(QWidget):
         self.top = 10
         self.width = 640
         self.height = 480
+
+        # GUI signals
+        self.usr_sig = Synth_signal()
+
         self.initGUI()
     
     def initGUI(self):

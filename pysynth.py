@@ -1,10 +1,10 @@
 from psop import *
 from gui import *
+from PyQt5.QtCore import *
 import pyaudio
 import numpy as np
 import mido
 import sys
-from PyQt5.QtCore import *
 
 class PySynth(QRunnable):
 
@@ -21,12 +21,15 @@ class PySynth(QRunnable):
         self.cur_pitch = 1
         self.global_vol = 128
 
+        # GUI thread signals
+        self.usr_sig = Synth_signal()
 
     def callback(self, in_data, frame_count, time_info, status):
         data = np.asarray(self.instrument.get_samples(frame_count), dtype=np.int16)
         return (data, pyaudio.paContinue)
     
     def run(self): 
+        
         stream = self.p.open(format=pyaudio.paInt16,
                 channels=1,
                 rate=48000,
@@ -84,9 +87,11 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     threadpool = QThreadPool()
+    signals = Synth_signal()
     window = GUI()
     synth = PySynth()
     threadpool.start(synth)
 
     sys.exit(app.exec_())
-    
+    signals.safe_exit.emit()
+
