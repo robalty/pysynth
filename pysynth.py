@@ -21,13 +21,8 @@ class PySynth(QRunnable):
         self.cur_pitch = 1
         self.global_vol = 128
 
-<<<<<<< Updated upstream
-        # GUI thread signals
-        self.usr_sig = Synth_signal()
-=======
     def safe_exit():
         return True
->>>>>>> Stashed changes
 
     def callback(self, in_data, frame_count, time_info, status):
         data = np.asarray(self.instrument.get_samples(frame_count), dtype=np.int16)
@@ -93,21 +88,9 @@ class PySynth(QRunnable):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
-<<<<<<< Updated upstream
-    threadpool = QThreadPool()
-    signals = Synth_signal()
-=======
     threadpool = QThreadPool().globalInstance()
->>>>>>> Stashed changes
     window = GUI()
     synth = PySynth(window.signals)
     threadpool.start(synth)
-<<<<<<< Updated upstream
 
     sys.exit(app.exec_())
-    signals.safe_exit.emit()
-
-=======
-    
-    sys.exit(app.exec_()) 
->>>>>>> Stashed changes
