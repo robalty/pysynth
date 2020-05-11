@@ -1,12 +1,12 @@
-import sys
 from pysynth import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import *
 
 
-class UserSignals(QObject):
+class GUISignals(QObject):
     safe_exit = pyqtSignal()
+
 
 class GUI(QWidget):
 
@@ -17,14 +17,16 @@ class GUI(QWidget):
         self.top = 10
         self.width = 640
         self.height = 480
+        self.threadpool = QThreadPool().globalInstance()
+        self.gui_signals = GUISignals()
+        self.synth_signals = TerminateSignal()
+        self.init_gui()
+        self.init_synth()
 
-        self.signals = UserSignals()
-        self.initGUI()
-    
-    def initGUI(self):
+    def init_gui(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
-    
+
         layout = QGridLayout()
 
         # Create the splash image widget
@@ -46,9 +48,13 @@ class GUI(QWidget):
         layout.addWidget(inst_select, 1, 0)
         layout.addWidget(vol_slider, 2, 0)
         self.setLayout(layout)
-        
+
         self.show()
 
+    def init_synth(self):
+        synth = PySynth()
+        self.threadpool.start(synth)
+
     def closeEvent(self, event):
-        self.signals.safe_exit.emit() 
+        self.synth_signals.safe_exit.emit()
         event.accept()
