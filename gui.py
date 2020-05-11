@@ -5,7 +5,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import *
 
 
-class Synth_signal(QObject):
+class UserSignals(QObject):
     safe_exit = pyqtSignal()
 
 class GUI(QWidget):
@@ -18,9 +18,7 @@ class GUI(QWidget):
         self.width = 640
         self.height = 480
 
-        # GUI signals
-        self.usr_sig = Synth_signal()
-
+        self.signals = UserSignals()
         self.initGUI()
     
     def initGUI(self):
@@ -51,3 +49,6 @@ class GUI(QWidget):
         
         self.show()
 
+    def closeEvent(self, event):
+        self.signals.safe_exit.emit() 
+        event.accept()

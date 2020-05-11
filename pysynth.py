@@ -8,7 +8,7 @@ import sys
 
 class PySynth(QRunnable):
 
-    def __init__(self):
+    def __init__(self, signals):
         super(PySynth, self).__init__()
         self.instrument = Synth()
         self.p = pyaudio.PyAudio()
@@ -21,8 +21,13 @@ class PySynth(QRunnable):
         self.cur_pitch = 1
         self.global_vol = 128
 
+<<<<<<< Updated upstream
         # GUI thread signals
         self.usr_sig = Synth_signal()
+=======
+    def safe_exit():
+        return True
+>>>>>>> Stashed changes
 
     def callback(self, in_data, frame_count, time_info, status):
         data = np.asarray(self.instrument.get_samples(frame_count), dtype=np.int16)
@@ -40,6 +45,8 @@ class PySynth(QRunnable):
         inport = mido.open_input(mido.get_input_names()[0])
 
         for msg in inport:
+            if self.signals.connect(safe_exit):
+                break
             if msg.type == 'note_on':
                 self.cur_note = msg.note
                 self.instrument.press()
@@ -86,12 +93,21 @@ class PySynth(QRunnable):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
+<<<<<<< Updated upstream
     threadpool = QThreadPool()
     signals = Synth_signal()
+=======
+    threadpool = QThreadPool().globalInstance()
+>>>>>>> Stashed changes
     window = GUI()
-    synth = PySynth()
+    synth = PySynth(window.signals)
     threadpool.start(synth)
+<<<<<<< Updated upstream
 
     sys.exit(app.exec_())
     signals.safe_exit.emit()
 
+=======
+    
+    sys.exit(app.exec_()) 
+>>>>>>> Stashed changes
