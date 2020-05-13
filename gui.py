@@ -1,4 +1,3 @@
-import sys
 from pysynth import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon, QPixmap
@@ -13,12 +12,15 @@ class GUI(QWidget):
         self.top = 10
         self.width = 640
         self.height = 480
-        self.initGUI()
-    
-    def initGUI(self):
+        self.threadpool = QThreadPool().globalInstance()
+        self.synth_signals = Signaller()
+        self.init_gui()
+        self.synth = PySynth()
+
+    def init_gui(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
-    
+
         layout = QGridLayout()
 
         # Create the splash image widget
@@ -40,6 +42,9 @@ class GUI(QWidget):
         layout.addWidget(inst_select, 1, 0)
         layout.addWidget(vol_slider, 2, 0)
         self.setLayout(layout)
-        
+
         self.show()
 
+    def closeEvent(self, event):
+        self.synth.shutdown()
+        event.accept()
