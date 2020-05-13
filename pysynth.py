@@ -57,7 +57,6 @@ class PySynth(QRunnable):
             # pitch bend - 1 octave range
             self.cur_pitch = 2 ** (msg.pitch / 8192)
             x = self.cur_freq * self.cur_pitch
-            print(x)
             self.instrument.set_freq(x)
         elif msg.type == 'control_change':
             if msg.control == 7:
