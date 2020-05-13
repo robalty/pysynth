@@ -3,19 +3,23 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import *
 
+
 class GUI(QWidget):
 
     def __init__(self):
         super(GUI, self).__init__()
+
+        # Window environment variables
         self.title = 'PySynth - Feel the wave'
         self.left = 10
         self.top = 10
         self.width = 640
         self.height = 480
-        self.threadpool = QThreadPool().globalInstance()
+
+        # Objects and inits
         self.synth_signals = Signaller()
-        self.init_gui()
         self.synth = PySynth()
+        self.init_gui()
 
     def init_gui(self):
         self.setWindowTitle(self.title)
@@ -45,6 +49,8 @@ class GUI(QWidget):
 
         self.show()
 
+    # Overrides default close event signal
+    # to run the MIDI/audio stream shutdown sequence
     def closeEvent(self, event):
         self.synth.shutdown()
         event.accept()
