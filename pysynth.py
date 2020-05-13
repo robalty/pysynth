@@ -8,7 +8,7 @@ import sys
 
 
 class Signaller(QObject):
-    safe_exit = pyqtSignal()
+    signaller = pyqtSignal()
 
 
 class PySynth(QRunnable):
@@ -20,7 +20,6 @@ class PySynth(QRunnable):
         self.instrument = Synth()
         self.p = pyaudio.PyAudio()
         mido.set_backend('mido.backends.rtmidi/LINUX_ALSA')
-
 
         # VARIABLES:
         self.cur_note = 0
