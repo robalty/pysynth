@@ -3,11 +3,6 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import *
 
-
-class GUISignals(QObject):
-    safe_exit = pyqtSignal()
-
-
 class GUI(QWidget):
 
     def __init__(self):
@@ -18,10 +13,9 @@ class GUI(QWidget):
         self.width = 640
         self.height = 480
         self.threadpool = QThreadPool().globalInstance()
-        self.gui_signals = GUISignals()
-        self.synth_signals = TerminateSignal()
+        self.synth_signals = Signaller()
         self.init_gui()
-        self.init_synth()
+        self.synth = PySynth()
 
     def init_gui(self):
         self.setWindowTitle(self.title)
@@ -51,10 +45,6 @@ class GUI(QWidget):
 
         self.show()
 
-    def init_synth(self):
-        synth = PySynth()
-        self.threadpool.start(synth)
-
     def closeEvent(self, event):
-        self.synth_signals.safe_exit.emit()
+        self.synth.shutdown()
         event.accept()

@@ -7,7 +7,7 @@ import mido
 import sys
 
 
-class TerminateSignal(QObject):
+class Signaller(QObject):
     safe_exit = pyqtSignal()
 
 
@@ -16,10 +16,11 @@ class PySynth(QRunnable):
     def __init__(self):
         super(PySynth, self).__init__()
 
+        self.gui_signals = Signaller()
         self.instrument = Synth()
         self.p = pyaudio.PyAudio()
         mido.set_backend('mido.backends.rtmidi/LINUX_ALSA')
-        self.inport = mido.open_input(mido.get_input_names()[0])
+
 
         # VARIABLES:
         self.cur_note = 0
@@ -33,60 +34,57 @@ class PySynth(QRunnable):
                                   rate=48000,
                                   output=True,
                                   stream_callback=self.audio_callback)
+        self.stream.start_stream()
+
+        self.inport = mido.open_input(mido.get_input_names()[0],
+                                      callback=self.midi_callback)
 
     def audio_callback(self, in_data, frame_count, time_info, status):
         data = np.asarray(self.instrument.get_samples(frame_count), dtype=np.int16)
         return data, pyaudio.paContinue
 
-    def midi_callback(self):
-        for msg in self.inport:
-            if msg.type == 'note_on':
-                self.cur_note = msg.note
-                self.instrument.press()
-                self.cur_freq = (2 ** ((self.cur_note - 69) / 12)) * 440
-                self.instrument.set_freq(self.cur_freq * self.cur_pitch)
-                self.cur_vol = msg.velocity
-                self.instrument.vol = self.cur_vol * self.global_vol
-            elif msg.type == 'note_off':
-                if msg.note == self.cur_note:
-                    self.instrument.release()
-            elif msg.type == 'pitchwheel':
-                # pitch bend - 1 octave range
-                self.cur_pitch = 2 ** (msg.pitch / 8192)
-                x = self.cur_freq * self.cur_pitch
-                self.instrument.set_freq(x)
-            elif msg.type == 'control_change':
-                if msg.control == 7:
-                    # volume knob
-                    self.global_vol = msg.value
-                    self.instrument.vol = self.global_vol * self.cur_vol
-            elif msg.control == 3:
-                # next algorithm (ff on my keyboard)
-                if msg.value != 0:
-                    self.instrument.algorithm = (self.instrument.algorithm + 1) % 9
-                    print(self.instrument.algorithm)
-            elif msg.control == 2:
-                # prev algorithm (rw on my keyboard)
-                if msg.value != 0:
-                    self.instrument.algorithm = (self.instrument.algorithm - 1) % 9
-                    print(self.instrument.algorithm)
-            elif msg.control == 1:
-                # feedback amount on op[0] - mod wheel
-                t = (msg.value - 64) * (512 / np.pi)
-                self.instrument.ops[0].modulation = (msg.value - 64) * (8192 / np.pi)
-            else:
-                print(msg)
+    def midi_callback(self, msg):
+        if msg.type == 'note_on':
+            self.cur_note = msg.note
+            self.instrument.press()
+            self.cur_freq = (2 ** ((self.cur_note - 69) / 12)) * 440
+            self.instrument.set_freq(self.cur_freq * self.cur_pitch)
+            self.cur_vol = msg.velocity
+            self.instrument.vol = self.cur_vol * self.global_vol
+        elif msg.type == 'note_off':
+            if msg.note == self.cur_note:
+                self.instrument.release()
+        elif msg.type == 'pitchwheel':
+            # pitch bend - 1 octave range
+            self.cur_pitch = 2 ** (msg.pitch / 8192)
+            x = self.cur_freq * self.cur_pitch
+            self.instrument.set_freq(x)
+        elif msg.type == 'control_change':
+            if msg.control == 7:
+                # volume knob
+                self.global_vol = msg.value
+                self.instrument.vol = self.global_vol * self.cur_vol
+        elif msg.control == 3:
+            # next algorithm (ff on my keyboard)
+            if msg.value != 0:
+                self.instrument.algorithm = (self.instrument.algorithm + 1) % 9
+                print(self.instrument.algorithm)
+        elif msg.control == 2:
+            # prev algorithm (rw on my keyboard)
+            if msg.value != 0:
+                self.instrument.algorithm = (self.instrument.algorithm - 1) % 9
+                print(self.instrument.algorithm)
+        elif msg.control == 1:
+            # feedback amount on op[0] - mod wheel
+            t = (msg.value - 64) * (512 / np.pi)
+            self.instrument.ops[0].modulation = (msg.value - 64) * (8192 / np.pi)
         else:
             print(msg)
 
-    def run(self):
-        self.stream.start_stream()
-        timer = QTimer()
-        timer.timeout.connect(self.midi_callback)
-        timer.start(1)
+    def shutdown(self):
+        self.inport.close()
         self.stream.stop_stream()
         self.stream.close()
-
         self.p.terminate()
 
 
