@@ -7,10 +7,6 @@ import mido
 import sys
 
 
-class Signaller(QObject):
-    signaller = pyqtSignal()
-
-
 class PySynth(QRunnable):
 
     def __init__(self):
