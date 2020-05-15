@@ -28,8 +28,12 @@ class GUI(QWidget):
         self.vol_slider.valueChanged.connect(self.volume_change)
         self.vol_label.setBuddy(self.vol_slider)
 
+        # Instrument selector
+        self.inst_select = QComboBox()
+        self.inst_select.addItem('Synth 1')
+        self.inst_select.addItem('Synth 2')
+
         # Objects and inits
-        self.synth_signals = Signaller()
         self.synth = PySynth()
         self.init_gui()
 
@@ -44,14 +48,9 @@ class GUI(QWidget):
         pixmap = QPixmap('synthwave.jpg')
         label.setPixmap(pixmap)
 
-        # Instrument selector
-        inst_select = QComboBox()
-        inst_select.addItem('Synth 1')
-        inst_select.addItem('Synth 2')
-
         # Set up the widget grid layout
         layout.addWidget(label, 0, 0)
-        layout.addWidget(inst_select, 1, 0)
+        layout.addWidget(self.inst_select, 1, 0)
         layout.addWidget(self.vol_label, 2, 0)
         layout.addWidget(self.vol_slider, 3, 0)
         self.setLayout(layout)
