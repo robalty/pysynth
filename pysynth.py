@@ -12,7 +12,6 @@ class PySynth(QRunnable):
     def __init__(self):
         super(PySynth, self).__init__()
 
-        self.gui_signals = Signaller()
         self.instrument = Synth()
         self.p = pyaudio.PyAudio()
         mido.set_backend('mido.backends.rtmidi/LINUX_ALSA')

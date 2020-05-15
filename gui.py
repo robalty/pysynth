@@ -29,7 +29,6 @@ class GUI(QWidget):
         self.vol_label.setBuddy(self.vol_slider)
 
         # Objects and inits
-        self.synth_signals = Signaller()
         self.synth = PySynth()
         self.init_gui()
 
