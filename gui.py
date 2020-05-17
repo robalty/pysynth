@@ -1,13 +1,13 @@
-from pysynth import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtCore import *
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout
+from PyQt5.QtGui import QPixmap
 
 
 class GUI(QWidget):
 
     def __init__(self):
         super(GUI, self).__init__()
+        from pysynth import PySynth
         self.synth = PySynth()
 
         # Window environment variables
