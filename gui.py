@@ -1,13 +1,14 @@
-from pysynth import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtCore import *
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout
+from PyQt5.QtGui import QPixmap
 
 
 class GUI(QWidget):
 
     def __init__(self):
         super(GUI, self).__init__()
+        from pysynth import PySynth
+        self.synth = PySynth()
 
         # Window environment variables
         self.title = 'PySynth - Feel the wave'
@@ -17,7 +18,6 @@ class GUI(QWidget):
         self.height = 480
 
         # QObject Inits and Connections
-
         # Volume control slider
         self.vol_label = QLabel("Volume")
         self.vol_label.setAlignment(Qt.AlignCenter)
@@ -30,11 +30,10 @@ class GUI(QWidget):
 
         # Instrument selector
         self.inst_select = QComboBox()
-        self.inst_select.addItem('Synth 1')
-        self.inst_select.addItem('Synth 2')
+        for i in range(9):
+            self.inst_select.addItem(f"Algorithm {i}")
+        self.inst_select.currentIndexChanged.connect(lambda: self.inst_change(self.inst_select.currentIndex()))
 
-        # Objects and inits
-        self.synth = PySynth()
         self.init_gui()
 
     def init_gui(self):
@@ -59,6 +58,9 @@ class GUI(QWidget):
 
     def volume_change(self):
         self.synth.global_vol = self.vol_slider.value()
+
+    def inst_change(self, selected):
+        self.synth.instrument.algorithm = selected
 
     # Overrides default close event signal to run the MIDI/audio stream shutdown sequence
     def closeEvent(self, event):

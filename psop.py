@@ -32,6 +32,7 @@ class ADSR:
             temp.append(self.get_vol(clock + (i/SAMPLERATE)))
         return temp
 
+
 class Operator:
     def __init__(self, i=SAMPLERATE, f=220, m=1):
         self.mod = 1
@@ -82,7 +83,7 @@ class Synth:
             op.envelope.rtime = 0
             op.acc_phase = 0
 
-
+            
 def algtest(ops, clock, size):
     return alg1(ops, clock, size)
 
@@ -111,7 +112,6 @@ def alg1(ops, clock, size):
     second = samples_with(ops[1], clock, size, first)
     third = samples_with(ops[2], clock, size, second)
     return samples_with(ops[3], clock, size, third)
-
 
 def lerp(startval, endval, time, endtime):
     if time > endtime:

@@ -1,6 +1,7 @@
+from PyQt5.QtCore import QRunnable
+from PyQt5.QtWidgets import QApplication
+from gui import GUI
 from psop import *
-from gui import *
-from PyQt5.QtCore import *
 import pyaudio
 import numpy as np
 import mido
