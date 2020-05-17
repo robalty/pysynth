@@ -1,8 +1,9 @@
 ## GitHub Standards
 
 Make a branch for new features or areas you're working on. Commit often to that branch while you're working, push to the 
-branch when you're finished for the work period. Merge branch to master after you've finished the feature and thoroughly tested.
-Leave useful commit messages and merge comments.
+branch when you're finished for the work period. Merge branch to master after you've finished the feature and thoroughly
+tested. Leave useful commit messages and merge comments. Maintain a .gitignore file and don't push anything more than source
+code to the repo (for PyCharm and IDEs especially). [Here's a good general Python one.](https://github.com/github/gitignore/blob/master/Python.gitignore)
 
 ## Coding Standards
 
