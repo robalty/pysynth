@@ -29,6 +29,7 @@ class GUI(QWidget):
         self.vol_label.setBuddy(self.vol_slider)
 
         # Instrument selector
+        self.synth_label = QLabel("Synth 1")
         self.inst_select = QComboBox()
         for i in range(9):
             self.inst_select.addItem(f"Algorithm {i}")
@@ -48,10 +49,11 @@ class GUI(QWidget):
         label.setPixmap(pixmap)
 
         # Set up the widget grid layout
-        layout.addWidget(label, 0, 0)
-        layout.addWidget(self.inst_select, 1, 0)
-        layout.addWidget(self.vol_label, 2, 0)
-        layout.addWidget(self.vol_slider, 3, 0)
+        layout.addWidget(label, 0, 0, 1, 2)
+        layout.addWidget(self.synth_label, 1, 0)
+        layout.addWidget(self.inst_select, 2, 0)
+        layout.addWidget(self.vol_label, 1, 1)
+        layout.addWidget(self.vol_slider, 2, 1)
         self.setLayout(layout)
 
         self.show()
