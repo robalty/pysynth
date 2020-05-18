@@ -3,6 +3,17 @@ from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout
 from PyQt5.QtGui import QPixmap
 
 
+class AlgorithmSelector(QComboBox):
+    def __init__(self, synth):
+        super(AlgorithmSelector, self).__init__()
+        for i in range(9):
+            self.addItem(f"Algorithm {i}")
+        self.currentIndexChanged.connect(lambda: self.algorithm_change(synth))
+
+    def algorithm_change(self, synth):
+        synth.instrument.algorithm = self.currentIndex()
+
+
 class VolumeControl(QDial):
     def __init__(self, synth):
         super(VolumeControl, self).__init__()
@@ -18,15 +29,17 @@ class VolumeControl(QDial):
         synth.global_vol = self.value()
 
 
-class AlgorithmSelector(QComboBox):
+class PitchControl(QDial):
     def __init__(self, synth):
-        super(AlgorithmSelector, self).__init__()
-        for i in range(9):
-            self.addItem(f"Algorithm {i}")
-        self.currentIndexChanged.connect(lambda: self.algorithm_change(synth))
+        super(PitchControl, self).__init__()
+        self.label = QLabel("Pitch")
+        self.label.setAlignment(Qt.AlignCenter)
+        self.setNotchesVisible(True)
+        self.setRange(-8, 8)
+        self.valueChanged.connect(lambda: self.pitch_change(synth))
 
-    def algorithm_change(self, synth):
-        synth.instrument.algorithm = self.currentIndex()
+    def pitch_change(self, synth):
+        synth.cur_pitch = self.value()
 
 
 class GUI(QWidget):
@@ -47,11 +60,14 @@ class GUI(QWidget):
         # Synth labels
         self.synth_label = QLabel("Synth 1")
 
-        # Volume control slider
-        self.vol_a = VolumeControl(self.synth)
-
         # Algorithm selector
         self.alg_a = AlgorithmSelector(self.synth)
+
+        # Volume control dial
+        self.vol_a = VolumeControl(self.synth)
+
+        # Pitch control dial
+        self.pitch_a = PitchControl(self.synth)
 
         self.init_gui()
 
@@ -67,11 +83,13 @@ class GUI(QWidget):
         label.setPixmap(pixmap)
 
         # Set up the widget grid layout
-        layout.addWidget(label, 0, 0, 1, 2)
+        layout.addWidget(label, 0, 0, 1, 3)
         layout.addWidget(self.synth_label, 1, 0)
         layout.addWidget(self.alg_a, 2, 0)
         layout.addWidget(self.vol_a.label, 1, 1)
         layout.addWidget(self.vol_a, 2, 1)
+        layout.addWidget(self.pitch_a.label, 1, 2)
+        layout.addWidget(self.pitch_a, 2, 2)
         self.setLayout(layout)
 
         self.show()
