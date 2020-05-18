@@ -35,7 +35,7 @@ class PitchControl(QDial):
         self.label = QLabel("Pitch")
         self.label.setAlignment(Qt.AlignCenter)
         self.setNotchesVisible(True)
-        self.setRange(-8, 8)
+        self.setRange(-5, 5)
         self.valueChanged.connect(lambda: self.pitch_change(synth))
 
     def pitch_change(self, synth):
