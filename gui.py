@@ -3,6 +3,32 @@ from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout
 from PyQt5.QtGui import QPixmap
 
 
+class VolumeControl(QDial):
+    def __init__(self, synth):
+        super(VolumeControl, self).__init__()
+        self.label = QLabel("Volume")
+        self.label.setAlignment(Qt.AlignCenter)
+        self.setNotchesVisible(True)
+        self.setRange(0, 128)
+        self.setValue(100)
+        self.valueChanged.connect(lambda: self.vol_change(synth))
+        self.label.setBuddy(self)
+
+    def vol_change(self, synth):
+        synth.global_vol = self.value()
+
+
+class AlgorithmSelector(QComboBox):
+    def __init__(self, synth):
+        super(AlgorithmSelector, self).__init__()
+        for i in range(9):
+            self.addItem(f"Algorithm {i}")
+        self.currentIndexChanged.connect(lambda: self.algorithm_change(synth))
+
+    def algorithm_change(self, synth):
+        synth.instrument.algorithm = self.currentIndex()
+
+
 class GUI(QWidget):
 
     def __init__(self):
@@ -18,22 +44,14 @@ class GUI(QWidget):
         self.height = 480
 
         # QObject Inits and Connections
-        # Volume control slider
-        self.vol_label = QLabel("Volume")
-        self.vol_label.setAlignment(Qt.AlignCenter)
-        self.vol_slider = QDial()
-        self.vol_slider.setNotchesVisible(True)
-        self.vol_slider.setRange(0, 128)
-        self.vol_slider.setValue(100)
-        self.vol_slider.valueChanged.connect(self.volume_change)
-        self.vol_label.setBuddy(self.vol_slider)
-
-        # Instrument selector
+        # Synth labels
         self.synth_label = QLabel("Synth 1")
-        self.inst_select = QComboBox()
-        for i in range(9):
-            self.inst_select.addItem(f"Algorithm {i}")
-        self.inst_select.currentIndexChanged.connect(lambda: self.inst_change(self.inst_select.currentIndex()))
+
+        # Volume control slider
+        self.vol_a = VolumeControl(self.synth)
+
+        # Algorithm selector
+        self.alg_a = AlgorithmSelector(self.synth)
 
         self.init_gui()
 
@@ -51,18 +69,12 @@ class GUI(QWidget):
         # Set up the widget grid layout
         layout.addWidget(label, 0, 0, 1, 2)
         layout.addWidget(self.synth_label, 1, 0)
-        layout.addWidget(self.inst_select, 2, 0)
-        layout.addWidget(self.vol_label, 1, 1)
-        layout.addWidget(self.vol_slider, 2, 1)
+        layout.addWidget(self.alg_a, 2, 0)
+        layout.addWidget(self.vol_a.label, 1, 1)
+        layout.addWidget(self.vol_a, 2, 1)
         self.setLayout(layout)
 
         self.show()
-
-    def volume_change(self):
-        self.synth.global_vol = self.vol_slider.value()
-
-    def inst_change(self, selected):
-        self.synth.instrument.algorithm = selected
 
     # Overrides default close event signal to run the MIDI/audio stream shutdown sequence
     def closeEvent(self, event):
