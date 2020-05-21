@@ -69,7 +69,8 @@ class Synth:
         self.ops[op].mod = val
 
     def get_samples(self, num_samples):
-        temp = algtest(self.ops, self.clock, num_samples)
+        func = alg.get(self.algorithm)
+        temp = func(self.ops, self.clock, num_samples)
         self.clock += num_samples / SAMPLERATE
         return temp * self.vol
 
@@ -87,7 +88,7 @@ class Synth:
 
 
 def algtest(ops, clock, size):
-    return alg1(ops, clock, size)
+    return samples_fb(ops[0], clock, size)
 
 
 def samples(op, clock, size):
@@ -118,6 +119,59 @@ def alg1(ops, clock, size):
     second = samples_with(ops[1], clock, size, first)
     third = samples_with(ops[2], clock, size, second)
     return samples_with(ops[3], clock, size, third)
+
+def alg2(ops, clock, size):
+    first = (samples_fb(ops[0], clock, size) + samples(ops[1], clock, size)) / 2
+    second = samples_with(ops[2], clock, size, first)
+    return samples_with(ops[3], clock, size, second)
+
+def alg3(ops, clock, size):
+    first = samples_fb(ops[0], clock, size)
+    second = samples(ops[1], clock, size)
+    third = (first + samples_with(ops[2], clock, size, second)) / 2
+    return samples_with(ops[3], clock, size, third)
+
+#algs 3 and 4 only differ in where the feedback op gets added
+def alg4(ops, clock, size):
+    first = samples_fb(ops[0], clock, size)
+    second = samples(ops[2], clock, size)
+    third = (second + samples_with(ops[1], clock, size, first)) / 2
+    return samples_with(ops[3], clock, size, third)
+
+def alg5(ops, clock, size):
+    first = samples_fb(ops[0], clock, size)
+    second = samples_with(ops[1], clock, size, first)
+    third = samples(ops[2], clock, size)
+    return (second + samples_with(ops[3], clock, size, third)) / 2
+
+def alg6(ops, clock, size):
+    first = samples_fb(ops[0], clock, size)
+    second = samples_with(ops[1], clock, size, first)
+    third = samples_with(ops[2], clock, size, first)
+    fourth = samples_with(ops[3], clock, size, first)
+    return (second + third + fourth) / 3
+
+def alg7(ops, clock, size):
+    first = samples_fb(ops[0], clock, size)
+    second = samples_with(ops[1], clock, size, first)
+    return (second + samples(ops[2], clock, size) + samples(ops[3], clock, size)) / 3
+
+def alg8(ops, clock, size):
+    first = samples_fb(ops[0], clock, size) + samples(ops[1], clock, size)
+    second = samples(ops[2], clock, size) + samples(ops[3], clock, size)
+    return (first + second) / 4
+
+alg = {
+        0 : alg1,
+        1 : alg2,
+        2 : alg3,
+        3 : alg4,
+        4 : alg5,
+        5 : alg6,
+        6 : alg7,
+        7 : alg8,
+        8 : algtest
+}
 
 
 def lerp(startval, endval, time, endtime):

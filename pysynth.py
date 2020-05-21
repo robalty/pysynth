@@ -72,6 +72,7 @@ class PySynth(QRunnable):
             elif msg.control == 1:
                 # feedback amount on op[0] - mod wheel
                 t = (msg.value - 64) / 16
+                print(t)
                 self.instrument.set_mod(t, 0)
         else:
             print(msg)
