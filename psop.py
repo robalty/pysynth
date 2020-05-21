@@ -5,32 +5,36 @@ SAMPLERATE = 48000
 
 
 class ADSR:
-    def __init__(self, a=0.5, d=0.5, s=0.75, r=0.5):
-        self.a = a
-        self.d = d
+    def __init__(self, a=0.1, d=0.2, s=0.6, r=0.5):
+        self.timings = {
+                0 : 0,
+                1 : 1 / ((a * SAMPLERATE) + 1),
+                2 : -1 / ((d * SAMPLERATE) + 1),
+                3 : 0,
+                4 : -1 / ((r * SAMPLERATE) + 1)
+                }
         self.s = s
-        self.r = r
-        self.rvol = 0
-        self.rtime = 0
+        self.cur = 0
+        self.stage = 0
 
-    def get_vol(self, clock):
-        if self.rtime != 0:
-            return lerp(self.rvol, 0, clock - self.rtime, self.r)
-        if clock < self.a:
-            t = lerp(0, 1, clock, self.a)
-            self.rvol = t
-            return t
-        elif clock < (self.a + self.d):
-            t = lerp(1, self.s, clock, self.a + self.d)
-            self.rvol = t
-            return t
-        else:
-            return self.s
+    def get_vol(self):
+        temp = self.cur + self.timings.get(self.stage)
+        if temp > 0.99:
+            temp = 0.99
+            self.stage = 2
+        elif (self.stage == 2) & (temp < self.s):
+            temp = self.s
+            self.stage = 3
+        elif temp < 0:
+            self.stage = 0
+            return 0
+        self.cur = temp
+        return temp
 
-    def get_vols(self, clock, num):
+    def get_vols(self, num):
         temp = []
         for i in range(num):
-            temp.append(self.get_vol(clock + (i / SAMPLERATE)))
+            temp.append(self.get_vol())
         return temp
 
 
@@ -76,15 +80,15 @@ class Synth:
 
     def release(self):
         for op in self.ops:
-            op.envelope.rtime = self.clock
+            op.envelope.stage = 4
 
     def press(self):
-        self.clock = 0
         for op in self.ops:
             op.feedback = 0
-            op.envelope.rvol = 0
-            op.envelope.rtime = 0
+            op.envelope.stage = 1
+            op.envelope.cur = 0
             op.acc_phase = 0
+        self.clock = 0
 
 
 def algtest(ops, clock, size):
@@ -93,15 +97,15 @@ def algtest(ops, clock, size):
 
 def samples(op, clock, size):
     first = np.sin(np.fromfunction(lambda x: op.sample(clock + (x / SAMPLERATE)), (size,)))
-    vol = op.envelope.get_vols(clock, size)
+    vol = op.envelope.get_vols(size)
     return np.multiply(vol, np.sin(first))
 
 
 def samples_with(op, clock, size, in_op):
     first = np.fromfunction(lambda x: op.sample(clock + (x / SAMPLERATE)), (size,))
-    vol = op.envelope.get_vols(clock, size)
+    vol = op.envelope.get_vols(size)
     s_in = np.multiply(in_op, op.mod)
-    return np.multiply(vol, np.sin(first + s_in))
+    return np.multiply(vol, np.sin(np.add(first, s_in)))
 
 
 def samples_fb(op, clock, size):
@@ -110,7 +114,7 @@ def samples_fb(op, clock, size):
     for i in range(1, size):
         temp[i] = np.sin((op.mod * temp[i - 1]) + op.sample(clock + (i / SAMPLERATE)))
     op.feedback = temp[size - 1]
-    tempvols = op.envelope.get_vols(clock, size)
+    tempvols = op.envelope.get_vols(size)
     return np.multiply(temp, tempvols)
 
 

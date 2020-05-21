@@ -60,19 +60,18 @@ class PySynth(QRunnable):
                 self.global_vol = msg.value
                 self.instrument.vol = self.global_vol * self.cur_vol
             elif msg.control == 3:
-                # next algorithm (ff on my keyboard)
+                # increase op 0 mult (ff on my keyboard)
                 if msg.value != 0:
-                    self.instrument.algorithm = (self.instrument.algorithm + 1) % 9
-                    print(self.instrument.algorithm)
+                    temp = 1 + (self.instrument.ops[0].freq_mult % 16)
+                    self.instrument.ops[0].freq_mult = temp
             elif msg.control == 2:
-                # prev algorithm (rw on my keyboard)
+                # decrease op 0 mult (rw on my keyboard)
                 if msg.value != 0:
-                    self.instrument.algorithm = (self.instrument.algorithm - 1) % 9
-                    print(self.instrument.algorithm)
+                    temp = 1 + (self.instrument.ops[0].freq_mult % 16)
+                    self.instrument.ops[0].freq_mult = temp
             elif msg.control == 1:
                 # feedback amount on op[0] - mod wheel
                 t = (msg.value - 64) / 16
-                print(t)
                 self.instrument.set_mod(t, 0)
         else:
             print(msg)
