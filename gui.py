@@ -29,6 +29,20 @@ class VolumeControl(QDial):
         synth.global_vol = self.value()
 
 
+class OpFreqControl(QDial):
+    def __init__(self, synth, op):
+        super(OpFreqControl, self).__init__()
+        self.label = QLabel("Frequency")
+        self.label.setAlignment(Qt.AlignCenter)
+        self.setRange(60, 800)
+        self.setValue(220)
+        self.valueChanged.connect(lambda: self.op_freq_change(synth, op))
+        self.label.setBuddy(self)
+
+    def op_freq_change(self, synth, op):
+        synth.instrument.ops[op].frequency = self.value()
+
+
 class PitchControl(QDial):
     def __init__(self, synth):
         super(PitchControl, self).__init__()
@@ -69,6 +83,18 @@ class GUI(QWidget):
         # Pitch control dial
         self.pitch_a = PitchControl(self.synth)
 
+        # Operator control panel labels
+        self.op_a_label = QLabel("Operator A")
+        self.op_b_label = QLabel("Operator B")
+        self.op_c_label = QLabel("Operator C")
+        self.op_d_label = QLabel("Operator D")
+
+        # Operator frequency control dials
+        self.op_a_freq = OpFreqControl(self.synth, 0)
+        self.op_b_freq = OpFreqControl(self.synth, 1)
+        self.op_c_freq = OpFreqControl(self.synth, 2)
+        self.op_d_freq = OpFreqControl(self.synth, 3)
+
         self.init_gui()
 
     def init_gui(self):
@@ -83,13 +109,39 @@ class GUI(QWidget):
         label.setPixmap(pixmap)
 
         # Set up the widget grid layout
-        layout.addWidget(label, 0, 0, 1, 3)
+        # Splash image
+        layout.addWidget(label, 0, 0, 1, 4)
+
+        # Synth title
         layout.addWidget(self.synth_label, 1, 0)
+
+        # Algorithm selector
         layout.addWidget(self.alg_a, 2, 0)
+
+        # Synth volume control
         layout.addWidget(self.vol_a.label, 1, 1)
         layout.addWidget(self.vol_a, 2, 1)
+
+        # Pitch control
         layout.addWidget(self.pitch_a.label, 1, 2)
         layout.addWidget(self.pitch_a, 2, 2)
+
+        # Per operator labels
+        layout.addWidget(self.op_a_label, 3, 0)
+        layout.addWidget(self.op_b_label, 3, 1)
+        layout.addWidget(self.op_c_label, 3, 2)
+        layout.addWidget(self.op_d_label, 3, 3)
+
+        # Per operator frequency controls
+        layout.addWidget(self.op_a_freq.label, 4, 0)
+        layout.addWidget(self.op_b_freq.label, 4, 1)
+        layout.addWidget(self.op_c_freq.label, 4, 2)
+        layout.addWidget(self.op_d_freq.label, 4, 3)
+        layout.addWidget(self.op_a_freq, 5, 0)
+        layout.addWidget(self.op_b_freq, 5, 1)
+        layout.addWidget(self.op_c_freq, 5, 2)
+        layout.addWidget(self.op_d_freq, 5, 3)
+
         self.setLayout(layout)
 
         self.show()
