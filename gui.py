@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout
+from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout, QFrame
 from PyQt5.QtGui import QPixmap
 
 
@@ -118,7 +118,6 @@ class GUI(QWidget):
         pixmap = QPixmap('synthwave.jpg')
         label.setPixmap(pixmap)
 
-        # Set up the widget grid layout
         # Splash image
         layout.addWidget(label, 0, 0, 1, 4)
 
@@ -141,6 +140,9 @@ class GUI(QWidget):
             char = "A"
             j = chr(ord(char) + i)
             op_label = QLabel(f"Operator {j}")
+            op_label.setAlignment(Qt.AlignCenter)
+            op_label.setFrameStyle(QFrame.Panel | QFrame.Raised)
+            op_label.setLineWidth(5)
             layout.addWidget(op_label, 3, i)
 
         # Per operator frequency controls
