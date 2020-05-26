@@ -34,13 +34,14 @@ class OpFreqControl(QDial):
         super(OpFreqControl, self).__init__()
         self.label = QLabel("Frequency")
         self.label.setAlignment(Qt.AlignCenter)
-        self.setRange(60, 800)
-        self.setValue(220)
+        self.setNotchesVisible(True)
+        self.setRange(1, 16)
+        self.setValue(1)
         self.valueChanged.connect(lambda: self.op_freq_change(synth, op))
         self.label.setBuddy(self)
 
     def op_freq_change(self, synth, op):
-        synth.instrument.ops[op].frequency = self.value()
+        synth.instrument.ops[op].freq_mult = self.value()
 
 
 class PitchControl(QDial):
