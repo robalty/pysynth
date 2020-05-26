@@ -32,16 +32,25 @@ class VolumeControl(QDial):
 class OpFreqControl(QDial):
     def __init__(self, synth, op):
         super(OpFreqControl, self).__init__()
-        self.label = QLabel("Frequency")
-        self.label.setAlignment(Qt.AlignCenter)
         self.setNotchesVisible(True)
         self.setRange(1, 16)
         self.setValue(1)
         self.valueChanged.connect(lambda: self.op_freq_change(synth, op))
-        self.label.setBuddy(self)
 
     def op_freq_change(self, synth, op):
         synth.instrument.ops[op].freq_mult = self.value()
+
+
+class OpModControl(QDial):
+    def __init__(self, synth, op):
+        super(OpModControl, self).__init__()
+        self.setNotchesVisible(True)
+        self.setRange(1, 10)
+        self.setValue(1)
+        self.valueChanged.connect(lambda: self.op_mod_change(synth, op))
+
+    def op_mod_change(self, synth, op):
+        synth.instrument.ops[op].mod = self.value()
 
 
 class PitchControl(QDial):
@@ -84,17 +93,17 @@ class GUI(QWidget):
         # Pitch control dial
         self.pitch_a = PitchControl(self.synth)
 
-        # Operator control panel labels
-        self.op_a_label = QLabel("Operator A")
-        self.op_b_label = QLabel("Operator B")
-        self.op_c_label = QLabel("Operator C")
-        self.op_d_label = QLabel("Operator D")
-
         # Operator frequency control dials
         self.op_a_freq = OpFreqControl(self.synth, 0)
         self.op_b_freq = OpFreqControl(self.synth, 1)
         self.op_c_freq = OpFreqControl(self.synth, 2)
         self.op_d_freq = OpFreqControl(self.synth, 3)
+
+        # Operator mod control dials
+        self.op_a_mod = OpModControl(self.synth, 0)
+        self.op_b_mod = OpModControl(self.synth, 1)
+        self.op_c_mod = OpModControl(self.synth, 2)
+        self.op_d_mod = OpModControl(self.synth, 3)
 
         self.init_gui()
 
@@ -128,20 +137,31 @@ class GUI(QWidget):
         layout.addWidget(self.pitch_a, 2, 2)
 
         # Per operator labels
-        layout.addWidget(self.op_a_label, 3, 0)
-        layout.addWidget(self.op_b_label, 3, 1)
-        layout.addWidget(self.op_c_label, 3, 2)
-        layout.addWidget(self.op_d_label, 3, 3)
+        for i in range(4):
+            char = "A"
+            j = chr(ord(char) + i)
+            op_label = QLabel(f"Operator {j}")
+            layout.addWidget(op_label, 3, i)
 
         # Per operator frequency controls
-        layout.addWidget(self.op_a_freq.label, 4, 0)
-        layout.addWidget(self.op_b_freq.label, 4, 1)
-        layout.addWidget(self.op_c_freq.label, 4, 2)
-        layout.addWidget(self.op_d_freq.label, 4, 3)
+        for i in range(4):
+            freq_label = QLabel("Frequency")
+            freq_label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(freq_label, 4, i)
         layout.addWidget(self.op_a_freq, 5, 0)
         layout.addWidget(self.op_b_freq, 5, 1)
         layout.addWidget(self.op_c_freq, 5, 2)
         layout.addWidget(self.op_d_freq, 5, 3)
+
+        # Per operator mod controls
+        for i in range(4):
+            mod_label = QLabel("Mod")
+            mod_label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(mod_label, 6, i)
+        layout.addWidget(self.op_a_mod, 7, 0)
+        layout.addWidget(self.op_b_mod, 7, 1)
+        layout.addWidget(self.op_c_mod, 7, 2)
+        layout.addWidget(self.op_d_mod, 7, 3)
 
         self.setLayout(layout)
 
