@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout, QFrame
+from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout, QFrame, QLCDNumber
 from PyQt5.QtGui import QPixmap
 
 
@@ -17,21 +17,35 @@ class AlgorithmSelector(QComboBox):
 class VolumeControl(QDial):
     def __init__(self, synth):
         super(VolumeControl, self).__init__()
+
+        # Volume label
         self.label = QLabel("Volume")
         self.label.setAlignment(Qt.AlignCenter)
+
+        # Value display (updates on value change)
+        self.val_display = QLabel("100")
+        self.val_display.setAlignment(Qt.AlignCenter)
+        self.val_display.setFrameStyle(QFrame.StyledPanel)
+
         self.setNotchesVisible(True)
         self.setRange(0, 128)
         self.setValue(100)
         self.valueChanged.connect(lambda: self.vol_change(synth))
-        self.label.setBuddy(self)
 
     def vol_change(self, synth):
         synth.global_vol = self.value()
+        self.val_display.setNum(self.value())
 
 
 class OpFreqControl(QDial):
     def __init__(self, synth, op):
         super(OpFreqControl, self).__init__()
+
+        # Value display updates on dial change
+        self.val_display = QLabel("1")
+        self.val_display.setAlignment(Qt.AlignCenter)
+        self.val_display.setFrameStyle(QFrame.StyledPanel)
+
         self.setNotchesVisible(True)
         self.setRange(1, 16)
         self.setValue(1)
@@ -39,11 +53,18 @@ class OpFreqControl(QDial):
 
     def op_freq_change(self, synth, op):
         synth.instrument.ops[op].freq_mult = self.value()
+        self.val_display.setNum(self.value())
 
 
 class OpModControl(QDial):
     def __init__(self, synth, op):
         super(OpModControl, self).__init__()
+
+        # Value display updates on dial change
+        self.val_display = QLabel("1")
+        self.val_display.setAlignment(Qt.AlignCenter)
+        self.val_display.setFrameStyle(QFrame.StyledPanel)
+
         self.setNotchesVisible(True)
         self.setRange(1, 10)
         self.setValue(1)
@@ -51,19 +72,32 @@ class OpModControl(QDial):
 
     def op_mod_change(self, synth, op):
         synth.instrument.ops[op].mod = self.value()
+        self.val_display.setNum(self.value())
 
 
 class PitchControl(QDial):
     def __init__(self, synth):
         super(PitchControl, self).__init__()
-        self.label = QLabel("Pitch")
+
+        # Global pitch control label
+        self.label = QLabel("Pitch Adjustment")
         self.label.setAlignment(Qt.AlignCenter)
+
+        # Global pitch value display
+        self.val_display = QLabel("0")
+        self.val_display.setAlignment(Qt.AlignCenter)
+        self.val_display.setFrameStyle(QFrame.StyledPanel)
+
         self.setNotchesVisible(True)
         self.setRange(-5, 5)
         self.valueChanged.connect(lambda: self.pitch_change(synth))
 
     def pitch_change(self, synth):
         synth.cur_pitch = self.value()
+        if self.value() > 0:
+            self.val_display.setText("+" + str(self.value()))
+        else:
+            self.val_display.setNum(self.value())
 
 
 class GUI(QWidget):
@@ -129,11 +163,13 @@ class GUI(QWidget):
 
         # Synth volume control
         layout.addWidget(self.vol_a.label, 1, 1)
-        layout.addWidget(self.vol_a, 2, 1)
+        layout.addWidget(self.vol_a.val_display, 2, 1)
+        layout.addWidget(self.vol_a, 3, 1)
 
         # Pitch control
         layout.addWidget(self.pitch_a.label, 1, 2)
-        layout.addWidget(self.pitch_a, 2, 2)
+        layout.addWidget(self.pitch_a.val_display, 2, 2)
+        layout.addWidget(self.pitch_a, 3, 2)
 
         # Per operator labels
         for i in range(4):
@@ -143,27 +179,35 @@ class GUI(QWidget):
             op_label.setAlignment(Qt.AlignCenter)
             op_label.setFrameStyle(QFrame.Panel | QFrame.Raised)
             op_label.setLineWidth(5)
-            layout.addWidget(op_label, 3, i)
+            layout.addWidget(op_label, 4, i)
 
         # Per operator frequency controls
         for i in range(4):
             freq_label = QLabel("Frequency")
             freq_label.setAlignment(Qt.AlignCenter)
-            layout.addWidget(freq_label, 4, i)
-        layout.addWidget(self.op_a_freq, 5, 0)
-        layout.addWidget(self.op_b_freq, 5, 1)
-        layout.addWidget(self.op_c_freq, 5, 2)
-        layout.addWidget(self.op_d_freq, 5, 3)
+            layout.addWidget(freq_label, 5, i)
+        layout.addWidget(self.op_a_freq.val_display, 6, 0)
+        layout.addWidget(self.op_a_freq, 7, 0)
+        layout.addWidget(self.op_b_freq.val_display, 6, 1)
+        layout.addWidget(self.op_b_freq, 7, 1)
+        layout.addWidget(self.op_c_freq.val_display, 6, 2)
+        layout.addWidget(self.op_c_freq, 7, 2)
+        layout.addWidget(self.op_d_freq.val_display, 6, 3)
+        layout.addWidget(self.op_d_freq, 7, 3)
 
         # Per operator mod controls
         for i in range(4):
             mod_label = QLabel("Mod")
             mod_label.setAlignment(Qt.AlignCenter)
-            layout.addWidget(mod_label, 6, i)
-        layout.addWidget(self.op_a_mod, 7, 0)
-        layout.addWidget(self.op_b_mod, 7, 1)
-        layout.addWidget(self.op_c_mod, 7, 2)
-        layout.addWidget(self.op_d_mod, 7, 3)
+            layout.addWidget(mod_label, 8, i)
+        layout.addWidget(self.op_a_mod.val_display, 9, 0)
+        layout.addWidget(self.op_a_mod, 10, 0)
+        layout.addWidget(self.op_b_mod.val_display, 9, 1)
+        layout.addWidget(self.op_b_mod, 10, 1)
+        layout.addWidget(self.op_c_mod.val_display, 9, 2)
+        layout.addWidget(self.op_c_mod, 10, 2)
+        layout.addWidget(self.op_d_mod.val_display, 9, 3)
+        layout.addWidget(self.op_d_mod, 10, 3)
 
         self.setLayout(layout)
 
