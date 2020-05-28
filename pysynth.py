@@ -22,6 +22,8 @@ class PySynth(QRunnable):
         self.cur_freq = 0
         self.cur_vol = 0
         self.cur_pitch = 1
+        self.semi_shift = 0
+        self.pitch_shift = 1
         self.global_vol = 128
 
         self.stream = self.p.open(format=pyaudio.paInt16,
@@ -43,7 +45,8 @@ class PySynth(QRunnable):
             self.cur_note = msg.note
             self.instrument.press()
             self.cur_freq = (2 ** ((self.cur_note - 69) / 12)) * 440
-            self.instrument.set_freq(self.cur_freq * self.cur_pitch)
+            self.pitch_shift = (2 ** (self.semi_shift / 1200))
+            self.instrument.set_freq(self.cur_freq * self.cur_pitch * self.pitch_shift)
             self.cur_vol = msg.velocity
             self.instrument.vol = self.cur_vol * self.global_vol
         elif msg.type == 'note_off':

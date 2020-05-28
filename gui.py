@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout, QFrame, QLCDNumber
+from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout, QFrame
 from PyQt5.QtGui import QPixmap
 
 
@@ -93,7 +93,7 @@ class PitchControl(QDial):
         self.valueChanged.connect(lambda: self.pitch_change(synth))
 
     def pitch_change(self, synth):
-        synth.cur_pitch = self.value()
+        synth.semi_shift = self.value() * 100
         if self.value() > 0:
             self.val_display.setText("+" + str(self.value()))
         else:
