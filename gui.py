@@ -1,6 +1,17 @@
+from decimal import Decimal, Context, setcontext
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout, QFrame
 from PyQt5.QtGui import QPixmap
+
+# Since Qt only accepts integer values, we need an array to handle
+# floats values
+float_array = list()
+control_context = Context(prec=2)
+setcontext(control_context)
+j = Decimal(0.0)
+for i in range(101):
+    float_array.append(j.normalize())
+    j += Decimal(0.1)
 
 
 class AlgorithmSelector(QComboBox):
@@ -61,18 +72,16 @@ class OpModControl(QDial):
         super(OpModControl, self).__init__()
 
         # Value display updates on dial change
-        self.val_display = QLabel("1")
+        self.val_display = QLabel("0")
         self.val_display.setAlignment(Qt.AlignCenter)
         self.val_display.setFrameStyle(QFrame.StyledPanel)
 
-        self.setNotchesVisible(True)
-        self.setRange(1, 10)
-        self.setValue(1)
+        self.setRange(0, 100)
         self.valueChanged.connect(lambda: self.op_mod_change(synth, op))
 
     def op_mod_change(self, synth, op):
-        synth.instrument.ops[op].mod = self.value()
-        self.val_display.setNum(self.value())
+        synth.instrument.ops[op].mod = float(float_array[self.value()])
+        self.val_display.setNum(float(float_array[self.value()]))
 
 
 class PitchControl(QDial):
