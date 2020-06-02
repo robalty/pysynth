@@ -3,26 +3,26 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout, QFrame
 from PyQt5.QtGui import QPixmap
 
-# Since Qt only accepts integer values, we need an array to handle
-# floats values
-float_array = list()
-control_context = Context(prec=2)
-setcontext(control_context)
-j = Decimal(0.0)
-for i in range(101):
-    float_array.append(j.normalize())
-    j += Decimal(0.1)
-
+NUM_INSTRUMENTS = 4
 
 class AlgorithmSelector(QComboBox):
     def __init__(self, synth):
         super(AlgorithmSelector, self).__init__()
-        for i in range(9):
-            self.addItem(f"Algorithm {i}")
+        #Enumerating the algorithms manually
+        self.addItem(f"A > B > C > D")
+        self.addItem(f"(A + B) > C > D")
+        self.addItem(f"(A + (B > C)) > D")
+        self.addItem(f"((A > B) + C) > D")
+        self.addItem(f"(A > B) + (C > D)")
+        self.addItem(f"(A > B) + (A > C) + (A > D)")
+        self.addItem(f"(A > B) + C + D")
+        self.addItem(f"A + B + C + D")
+        self.addItem(f"A")
         self.currentIndexChanged.connect(lambda: self.algorithm_change(synth))
 
     def algorithm_change(self, synth):
-        synth.instrument.algorithm = self.currentIndex()
+        for i in range(0, NUM_INSTRUMENTS):
+            synth.instrument[i].algorithm = self.currentIndex()
 
 
 class VolumeControl(QDial):
@@ -63,7 +63,8 @@ class OpFreqControl(QDial):
         self.valueChanged.connect(lambda: self.op_freq_change(synth, op))
 
     def op_freq_change(self, synth, op):
-        synth.instrument.ops[op].freq_mult = self.value()
+        for i in range(0, NUM_INSTRUMENTS):
+            synth.instrument[i].ops[op].freq_mult = self.value()
         self.val_display.setNum(self.value())
 
 
@@ -76,12 +77,13 @@ class OpModControl(QDial):
         self.val_display.setAlignment(Qt.AlignCenter)
         self.val_display.setFrameStyle(QFrame.StyledPanel)
 
-        self.setRange(0, 100)
+        self.setRange(-800, 800)
         self.valueChanged.connect(lambda: self.op_mod_change(synth, op))
 
     def op_mod_change(self, synth, op):
-        synth.instrument.ops[op].mod = float(float_array[self.value()])
-        self.val_display.setNum(float(float_array[self.value()]))
+        for i in range(0, NUM_INSTRUMENTS):
+            synth.instrument[i].ops[op].mod = self.value() / 100.0
+        self.val_display.setNum(self.value() / 100.0)
 
 
 class PitchControl(QDial):
@@ -98,11 +100,11 @@ class PitchControl(QDial):
         self.val_display.setFrameStyle(QFrame.StyledPanel)
 
         self.setNotchesVisible(True)
-        self.setRange(-5, 5)
+        self.setRange(-12, 12)
         self.valueChanged.connect(lambda: self.pitch_change(synth))
 
     def pitch_change(self, synth):
-        synth.semi_shift = self.value() * 100
+        synth.semi_shift = self.value()
         if self.value() > 0:
             self.val_display.setText("+" + str(self.value()))
         else:
@@ -155,14 +157,6 @@ class GUI(QWidget):
         self.setGeometry(self.left, self.top, self.width, self.height)
 
         layout = QGridLayout()
-
-        # Create the splash image widget
-        label = QLabel(self)
-        pixmap = QPixmap('synthwave.jpg')
-        label.setPixmap(pixmap)
-
-        # Splash image
-        layout.addWidget(label, 0, 0, 1, 4)
 
         # Synth title
         layout.addWidget(self.synth_label, 1, 0)

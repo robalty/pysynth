@@ -40,7 +40,7 @@ class ADSR:
 
 class Operator:
     def __init__(self, i=SAMPLERATE, f=220, m=1):
-        self.mod = 1
+        self.mod = 0
         self.frequency = f
         self.freq_mult = m
         self.envelope = ADSR()
@@ -98,7 +98,7 @@ def algtest(ops, clock, size):
 def samples(op, clock, size):
     first = np.sin(np.fromfunction(lambda x: op.sample(clock + (x / SAMPLERATE)), (size,)))
     vol = op.envelope.get_vols(size)
-    return np.multiply(vol, np.sin(first))
+    return np.multiply(vol,np.sin(first))
 
 
 def samples_with(op, clock, size, in_op):
@@ -109,13 +109,16 @@ def samples_with(op, clock, size, in_op):
 
 
 def samples_fb(op, clock, size):
-    temp = np.empty(size)
-    temp[0] = np.sin(op.sample(clock) + (op.mod * op.feedback))
-    for i in range(1, size):
-        temp[i] = np.sin((op.mod * temp[i - 1]) + op.sample(clock + (i / SAMPLERATE)))
-    op.feedback = temp[size - 1]
-    tempvols = op.envelope.get_vols(size)
-    return np.multiply(temp, tempvols)
+    first = np.fromfunction(lambda x: op.sample(clock + ((x+1) / SAMPLERATE)), (size,))
+    second = np.sin(np.fromfunction(lambda x: op.sample(clock + (x / SAMPLERATE)), (size,)))
+    vol = op.envelope.get_vols(size)
+    s_in = np.multiply(second, op.mod)
+    output = np.sin(np.add(first, s_in))
+    temp = ((np.abs(op.mod) - 4) / 4)
+    if temp > 0:
+        output -= temp * output
+        output += temp * np.random.normal(scale=1, size=size)
+    return np.multiply(vol, output)
 
 
 def alg1(ops, clock, size):
