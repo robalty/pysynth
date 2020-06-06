@@ -7,7 +7,8 @@ import numpy as np
 import mido
 import sys
 
-NUM_INSTRUMENTS = 4
+NUM_INSTRUMENTS = 3
+BUFFER_SIZE = 1024
 
 class PySynth(QRunnable):
 
@@ -19,6 +20,7 @@ class PySynth(QRunnable):
         for i in range(0, NUM_INSTRUMENTS):
             self.instrument.append(Synth())
         self.p = pyaudio.PyAudio()
+        self.buffer = np.empty(BUFFER_SIZE)
         mido.set_backend('mido.backends.rtmidi/LINUX_ALSA')
 
         # VARIABLES:
@@ -42,10 +44,10 @@ class PySynth(QRunnable):
                                       callback=self.midi_callback)
 
     def audio_callback(self, in_data, frame_count, time_info, status):
-        data = np.zeros(frame_count, dtype=np.int16)
+        self.buffer = np.zeros(frame_count, dtype=np.int16)
         for i in range(0, NUM_INSTRUMENTS):
-            data += np.asarray(self.instrument[i].get_samples(frame_count)/NUM_INSTRUMENTS, dtype=np.int16)
-        return data, pyaudio.paContinue
+            self.buffer += np.asarray(self.instrument[i].get_samples(frame_count)/NUM_INSTRUMENTS, dtype=np.int16)
+        return self.buffer, pyaudio.paContinue
 
     def midi_callback(self, msg):
         if msg.type == 'note_on':
