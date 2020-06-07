@@ -240,19 +240,10 @@ class GUI(QWidget):
 
     # Update the canvas
     def update_canvas(self):
-        data_int = self.synth.buffer
-        data_np = np.array(data_int, dtype='b')
-
-        x = np.arange(0, 1024, 1)
-        y = np.random.rand(1024)
+        x = [i + 1 for i in range(1024)]
+        y = self.synth.buffer
 
         self._dynamic_ax.clear()
         self.line = self._dynamic_ax.plot(x, y, '-', lw=1)
-
-        # Normalize int array to [1.0, -1.0] range.
-        data_np = (data_np - -128) / (127 - -128)
-        # print(data_np, len(data_np))
-        self.line[0].set_ydata(data_np)
-        self._dynamic_ax.set_ylim([-1.0, 1.0])
-
+        self._dynamic_ax.set_ylim([-10000, 10000])
         self._dynamic_ax.figure.canvas.draw()
