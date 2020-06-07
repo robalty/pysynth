@@ -245,5 +245,5 @@ class GUI(QWidget):
 
         self._dynamic_ax.clear()
         self.line = self._dynamic_ax.plot(x, y, '-', lw=1)
-        self._dynamic_ax.set_ylim([-10000, 10000])
+        self._dynamic_ax.set_ylim([-32_768, 32_767])
         self._dynamic_ax.figure.canvas.draw()
