@@ -2,13 +2,18 @@ from decimal import Decimal, Context, setcontext
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QLabel, QDial, QComboBox, QGridLayout, QFrame
 from PyQt5.QtGui import QPixmap
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import numpy as np
+import time
 
 NUM_INSTRUMENTS = 4
+
 
 class AlgorithmSelector(QComboBox):
     def __init__(self, synth):
         super(AlgorithmSelector, self).__init__()
-        #Enumerating the algorithms manually
+        # Enumerating the algorithms manually
         self.addItem(f"A > B > C > D")
         self.addItem(f"(A + B) > C > D")
         self.addItem(f"(A + (B > C)) > D")
@@ -158,6 +163,16 @@ class GUI(QWidget):
 
         layout = QGridLayout()
 
+        # Spectrum analyzer
+        dynamic_canvas = FigureCanvas(Figure(figsize=(5, 3)))
+        dynamic_canvas.setMinimumHeight(300)
+        layout.addWidget(dynamic_canvas, 0, 0, 1, 4)
+
+        self._dynamic_ax = dynamic_canvas.figure.subplots()
+        self.timer = dynamic_canvas.new_timer(
+            100, [(self.update_canvas, (), {})])
+        self.timer.start()
+
         # Synth title
         layout.addWidget(self.synth_label, 1, 0)
 
@@ -220,3 +235,11 @@ class GUI(QWidget):
     def closeEvent(self, event):
         self.synth.shutdown()
         event.accept()
+
+    # Update the canvas
+    def update_canvas(self):
+        self._dynamic_ax.clear()
+        t = np.linspace(0, 10, 101)
+        # Shift the sinusoid as a function of time.
+        self._dynamic_ax.plot(t, np.sin(t + time.time()))
+        self._dynamic_ax.figure.canvas.draw()
